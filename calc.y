@@ -29,7 +29,7 @@ int count;
 int flag=0;
 int qtr=-1;
 double arr[1000];
-double x1[721];
+double x1[361];
 
 double sym[52];         //a-z and A-Z
 
@@ -55,7 +55,7 @@ void set_input(const char *input) {
 }
 
 
-%token PLOT OPEN_BRACKET CLOSE_BRACKET ASSIGN PRINT COMMA
+%token PLOT OPEN_BRACKET CLOSE_BRACKET ASSIGN PRINT COMMA 
 %token <val> num
 %token <var> VARIABLE
 %token ADD SUB MUL DIV POW EXP SQRT MOD PI E
@@ -67,7 +67,7 @@ void set_input(const char *input) {
 %left POW SQRT                     
 %left OPEN_BRACKET CLOSE_BRACKET   
 
-%type <val> exp
+%type <val> exp 
 %type <val> constant
 %type <str> expr
 %type <val> new
@@ -129,8 +129,8 @@ new: PLOT OPEN_BRACKET expr CLOSE_BRACKET {
         printf("PLOTTING y=%s\n", $3);
         plot = 1;
         // Define the range for 'x'
-        int start_value = -360;  
-        int end_value = 360;   
+        int start_value = -180;  
+        int end_value = 180;   
         int step = 1;  
         
         
@@ -167,7 +167,7 @@ new: PLOT OPEN_BRACKET expr CLOSE_BRACKET {
             yyparse();  
             
         }
-        for(int i=0; i<721;i++)
+        for(int i=0; i<361;i++)
         {
             printf("%f\n",arr[i]);
         }
@@ -178,17 +178,20 @@ new: PLOT OPEN_BRACKET expr CLOSE_BRACKET {
                 fprintf(stderr, "Error Opening gnuplot\n");
             }
 
-            fprintf(gnuplot, "set xrange [-360:360]\n");  // x-axis range from 0 to 6
+            fprintf(gnuplot, "set xrange [-180:180]\n");  // x-axis range from 0 to 6
             fprintf(gnuplot, "set yrange [-2:2]\n");
             fprintf(gnuplot, "set grid\n");
-            fprintf(gnuplot, "set xtics 60\n");
+            fprintf(gnuplot, "set xtics 30\n");
+            fprintf(gnuplot, "set style line 1 linecolor rgb 'black' linetype 1 linewidth 1\n");
             fprintf(gnuplot, "plot '-' using 1:2 with lines smooth csplines\n");
 
-            for(int i=0;i<721;i++)
+            for(int i=0;i<361;i++)
             {
                 fprintf(gnuplot, "%lf %lf\n", x1[i], arr[i]);
             }
-            fprintf(gnuplot, "e\n");
+
+            
+
             fclose(gnuplot);
 
     }
@@ -230,22 +233,34 @@ expr: SIN OPEN_BRACKET expr CLOSE_BRACKET {
 }
 | expr ADD expr {
     $$ = malloc(sizeof(char) * 100);
-    sprintf($$, "(%s + %s)", $1, $3);  
+    sprintf($$, "(%s+%s)", $1, $3);  
 }
 | expr MUL expr {
     $$ = malloc(sizeof(char) * 100);
-    sprintf($$, "(%s * %s)", $1, $3);
+    sprintf($$, "(%s*%s)", $1, $3);
 }
 | expr SUB expr {
     $$ = malloc(sizeof(char) * 100);
-    sprintf($$, "(%s - %s)", $1, $3);
+    sprintf($$, "(%s-%s)", $1, $3);
 }
 | expr DIV expr {
     $$ = malloc(sizeof(char) * 100);
-    sprintf($$, "(%s / %s)", $1, $3);
+    sprintf($$, "(%s/%s)", $1, $3);
 }
 | OPEN_BRACKET expr CLOSE_BRACKET {
     $$ = $2; 
+}
+| LOG OPEN_BRACKET expr CLOSE_BRACKET {   
+    $$ = malloc(sizeof(char) * 100);
+    sprintf($$, "log10(%s)",$3);                    
+}
+| LN OPEN_BRACKET expr CLOSE_BRACKET {    
+    $$ = malloc(sizeof(char) * 100);
+    sprintf($$, "log(%s)", $3);                      
+}
+| SQRT OPEN_BRACKET expr CLOSE_BRACKET {  
+    $$ = malloc(sizeof(char) * 100);
+    sprintf($$, "sqrt(%s)", $3);                    
 }
 
 
@@ -473,38 +488,38 @@ constant : PI {
 
 %%
 void main() {
-    for(int i=0;i<721;i++)
+    for(int i=0;i<361;i++)
     {
-        x1[i] = i-360;
+        x1[i] = i-180;
     }
     do {
         flag = 0; count = 0;               
         printf("-> ");       
 
-        // Read input from stdin (terminal)
+        
         char input[1024];  // Adjust size as needed
         if (fgets(input, sizeof(input), stdin) == NULL) {
             perror("Error reading input");
             break;
         }
 
-        // Strip newline character if it's present
+        
         size_t len = strlen(input);
         if (len > 0 && input[len - 1] == '\n') {
             input[len - 1] = '\0';
         }
 
-        // Create a new buffer for the terminal input
+        
         YY_BUFFER_STATE buffer = yy_scan_string(input);
         if (!buffer) {
             perror("Error scanning input");
             continue;
         }
 
-        // Switch to the newly created buffer for stdin
+        
         yy_switch_to_buffer(buffer);
 
-        // Parse the terminal input
+        
         int result = yyparse();
         if (result != 0) {
             printf("Parsing failed.\n");
@@ -512,7 +527,7 @@ void main() {
             printf("Parsing succeeded.\n");
         }
 
-        // Delete the buffer after parsing
+        
         yy_delete_buffer(buffer);
 
         if (flag == -1) {                  // Check for errors

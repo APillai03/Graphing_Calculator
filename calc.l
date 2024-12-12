@@ -12,7 +12,7 @@
 return PRINT; 
 }
 
-[0-9]+|[0-9]*[0-9]+ {
+[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)? {
 yylval.val = atof(yytext);
 return num;
 }
@@ -119,7 +119,6 @@ plot {
 "," {
     return COMMA;
 }
-
 [\t];
 \n {
 return 0;
